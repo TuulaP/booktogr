@@ -2,6 +2,9 @@
 
 # Usage:  python booktogr.py -i 9780552134620
 
+# for getting loan info from Koha (fin) and add them to gr. 
+# requires bit of setup.
+# python booktogr.py -e  
 import base64
 import email
 import json
@@ -35,10 +38,10 @@ import codecs
 import pprint
 import simplejson as json
 from collections import OrderedDict
-#from goodreads_keys import grkey,grsecret
+from goodreads_keys import grkey,grsecret
 
-grkey=""
-grsecret=""
+#grkey=""
+#grsecret=""
 
 
 def percent_encoding(string):
@@ -292,10 +295,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if (args.email):
+      from kohatogr import parseKohaEmail
+
       print("Checking email for recent loans...")
-      recentLoansStr = chkLoanEmail()
-      print(recentLoansStr)
-      # todo parse loans and add them to the shelf
+      recentLoans = chkLoanEmail()
+      print(recentLoans)
+      books = parseKohaEmail(recentLoans)
+      for book in books:
+        addtoReading(book)
 
     if (args.isbn):
      addtoReading(args.isbn)
