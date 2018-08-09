@@ -1,10 +1,5 @@
 #!/usr/bin/env python
 
-# Usage:  python booktogr.py -i 9780552134620
-
-# for getting loan info from Koha (fin) and add them to gr. 
-# requires bit of setup.
-# python booktogr.py -e  
 import base64
 import email
 import json
@@ -23,6 +18,10 @@ from apiclient import discovery, errors
 from oauth2client import client, tools
 from oauth2client.file import Storage
 from rauth.service import OAuth1Service, OAuth1Session
+
+from kohatogr import parseKohaEmail, giveBookDetails
+from tpcsvutils import writeToCSV
+
 
 #utilizes gr example at:
 #https://www.goodreads.com/api/oauth_example#python
@@ -58,11 +57,13 @@ def chkGoodReads (myisbn):
   gc = client.GoodreadsClient(grkey, grsecret)
 
   isbn="978-055-38-0371-6"
+  #url = "https://www.goodreads.com/search[isbn]="+isbn
 
   try:
   	book=gc.book(isbn=myisbn)
   except:
-	  print "Book not found(?)\n"
+    print "Book with isbn {0} not found(?)\n".format(myisbn)
+    return (0,0)
 
 
   print "\n", book.authors[0].name
@@ -221,8 +222,8 @@ def graskaccess():
       accepted = raw_input('Have you authorized me? (y/n) ')
 
   session = goodreads.get_auth_session(request_token, request_token_secret)
-    #print "TOKEN:", session.access_token
-    #print "SECR:", session.access_token_secret
+  #print "TOKEN:", session.access_token
+  #print "SECR:", session.access_token_secret
 
   storetokens(session.access_token,session.access_token_secret)
 
@@ -243,16 +244,15 @@ def grExistingSession (token1,token2):
 def addtoReading(myisbn):
 
     gc = client.GoodreadsClient(grkey, grsecret)
+    gc.authenticate(grkey,grsecret)
 
-    a=grkey 
-    b=grsecret
-
-    gc.authenticate(a,b)
     pp = pprint.PrettyPrinter(indent=4)
 
-    import json
-
     (res,mibook) = chkGoodReads(myisbn)
+
+    if (res==0):
+        print("Sorry, book with isbn: {0} not found in GR".format(myisbn) )
+        return 0
 
     #TODO 2 diff ways to access gr, remove 1   
     #grbookid = session.get('https://www.goodreads.com/book/isbn_to_id',
@@ -260,9 +260,9 @@ def addtoReading(myisbn):
     #print grbookid
 
     gid = mibook.gid
-    print("Book found: gid:"+gid + " isgn:",myisbn)
+    print("Book found: gid:"+gid + " isbn:",myisbn)
 
-    #if there is reason to believe that old sessio is not working
+    #if there is reason to believe that old session is not working
     #session = graskaccess()
     (tok1,tok2)=gettokens()
     session = grExistingSession(tok1,tok2)
@@ -276,34 +276,55 @@ def addtoReading(myisbn):
     print("result:",res)
 
 
+def addtoMissing(isbn):
+    
+    print("Data got: ", isbn)
+    #9789525132977
+    book = giveBookDetails(id, isbn)
+    bookdets = (book[0],book[1],book[2],"","",book[3],"",book[4])
+    
+    from tpcsvutils import writeToCSV
+    #Title, Author, ISBN, My Rating, Average Rating, Publisher, Binding, Year Published, Original Publication Year,
+    writeToCSV('koe2.csv', bookdets)
+
+
+
 
 if __name__ == "__main__":
 
-
+    #todo : Add info about need to give either -e or -a
     import argparse
     parser = argparse.ArgumentParser(description='From email to goodreads')
     parser.add_argument("-i", "--isbn", dest="isbn",
-                  help="Archive pack name")
+                  help="add individual isbn to reading list")
 
-    parser.add_argument("-a", "--add", dest="add", default=False, action="store_true",
-                  help="Pick")
+    parser.add_argument("-a", "--add", dest="add", 
+                  help="add a missing book to the csv list")
 
     parser.add_argument("-e", "--email", dest="email", default=False,action="store_true",
-                  help="Pick")
+                  help="check books from email and add them to reading list")
 
 
     args = parser.parse_args()
 
-    if (args.email):
-      from kohatogr import parseKohaEmail
 
+    if (args.email):
       print("Checking email for recent loans...")
       recentLoans = chkLoanEmail()
       print(recentLoans)
       books = parseKohaEmail(recentLoans)
+
       for book in books:
-        addtoReading(book)
+        ok = addtoReading(book)
+        #TODO: if noticing that a book was nonexistent, add to a csv for creating a new item
+        if not ok:
+            addtoMissing(book)
+
 
     if (args.isbn):
-     addtoReading(args.isbn)
+        addtoReading(args.isbn)
+
+    if (args.add):
+        addtoMissing(args.add)
+        
 
