@@ -27,7 +27,7 @@ from rauth.service import OAuth1Service, OAuth1Session
 
 from kohatogr import parseKohaEmail, giveBookDetails
 from tpcsvutils import writeToCSV
-from finbooks import parseFEmail
+from finbooks import parseFEmail, seekBookbyISBN
 
 
 # utilizes gr example at:
@@ -289,16 +289,18 @@ def addtoReading(myisbn):
     return res
 
 
-def addtoMissing(isbn):
+def addtoMissing(isbn, filename="koe3.csv"):
 
     print("Data got: ", isbn)
     # 9789525132977  9789510363959
-    book = giveBookDetails(id, isbn)
+    #book = giveBookDetails(id, isbn)
+    book = seekBookbyISBN(isbn)
     bookdets = (book[0], book[1], book[2], "", "", book[3], "", book[4])
 
     from tpcsvutils import writeToCSV
     # Title, Author, ISBN, My Rating, Average Rating, Publisher, Binding, Year Published, Original Publication Year,
-    writeToCSV('koe2.csv', bookdets)
+    writeToCSV(filename, bookdets)
+    print("file to import to GR created {0}".format(filename))
 
 
 if __name__ == "__main__":
