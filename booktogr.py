@@ -141,7 +141,7 @@ def GetMimeMessage(service, user_id, msg_id, optcont="Lainasit seuraavat niteet:
                                                  format='raw').execute()
 
         msg = message['snippet'].encode('utf-8')
-        ## print('Message snippet: %s' % msg)
+        print('Message snippet: %s' % msg)
 
         msg_str = base64.urlsafe_b64decode(message['raw'].encode('ASCII'))
         ops = ""
@@ -163,7 +163,7 @@ def GetMimeMessage(service, user_id, msg_id, optcont="Lainasit seuraavat niteet:
         print('An error occurred: %s' % error)
 
 
-def chkLoanEmail(subjectstr="Fwd: Lainat", codestr="'Lainasit seuraavat niteet:'"):
+def chkLoanEmail(subjectstr="Lainat", codestr="'Lainasit seuraavat niteet:'"):
 
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
@@ -175,7 +175,7 @@ def chkLoanEmail(subjectstr="Fwd: Lainat", codestr="'Lainasit seuraavat niteet:'
     labels = ListMessagesMatchingQuery(service, 'me', subjectstr)
 
     # Pick up just newest email of specific topic
-    label = labels[0]
+    label = labels[0]   # newest one is the top one
     #print("Latest id:", label['id'])
     bodystr = GetMimeMessage(service, 'me', label['id'])
     #print("Sisältö: {0}".format(bodystr.encode('utf-8')))
