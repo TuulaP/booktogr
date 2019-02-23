@@ -78,13 +78,14 @@ def parseKohaEmail(emailstr):
 
     for line in emailstr.split("\n"):
         words = line.split(" ")
+        #print("Processing: ", words[0])
+
         if lineid % 2 != 0:
-            print("Processing: ", words[0])
             pass
         else:
             kohaid = words[0]
-            if (len(kohaid) > 3):
-                #print("kohaid", kohaid)
+            if (len(kohaid) > 3 and 'Lainasit' not in kohaid):
+                print("kohaid {0}".format(kohaid))
                 kohaids.append(seekKohaMarc(seekKohaSearch(kohaid)))
         lineid += 1
 

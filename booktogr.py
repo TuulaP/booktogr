@@ -138,26 +138,38 @@ def GetMimeMessage(service, user_id, msg_id, optcont="Lainasit seuraavat niteet:
     """
     try:
         message = service.users().messages().get(userId=user_id, id=msg_id,
-                                                 format='raw').execute()
+                                                 format='full').execute()
 
         msg = message['snippet'].encode('utf-8')
         print('Message snippet: %s' % msg)
 
-        msg_str = base64.urlsafe_b64decode(message['raw'].encode('ASCII'))
-        ops = ""
-        # print("Viesti: {0} \n********\n".format(msg_str))
+        # print(";".join(message.keys()))
+        print(";".join(message['payload'].keys()))
 
-        try:
-            ops = msg_str.split(
-                "X-MS-Exchange-Transport-CrossTenantHeadersStamped")[1].split("\r\n\r\n")[1]
-        except IndexError:
-            ops = msg_str.split(optcont)[1].split("Kiitos ")[0]
+        txts = message['payload']['body']['data'].encode('ASCII')
 
-            import quopri
-            ops = quopri.decodestring(ops).decode(
-                'utf-8')  # fixes  etc style from raw email
+        msg_str = base64.urlsafe_b64decode(txts)
+        #print("!!!", msg_str)
+        # print("XXX", base64.urlsafe_b64decode(message['raw'].encode('ASCII')))
+        # sys.exit(1)
+        #print("Videsti:", message)
+        #msg_str = base64.urlsafe_b64decode(message['payload'].encode('ASCII'))
+        #ops = ""
+        #print("Viesti: {0} \n********\n".format(msg_str))
+        # sys.exit(1)
+        # try:
+        #    ops = msg_str.split(
+        #        "X-MS-Exchange-Transport-CrossTenantHeadersStamped")[1].split("\r\n\r\n")[1]
+        # 3except IndexError:
+        #ops = msg_str.split(optcont)[1].split("Kiitos ")[0]
+        msg_str = msg_str.split("Kiitos ")[0]
+        # import quopri
+        # ops = quopri.decodestring(ops).decode(
+        #    'utf-8')  # fixes  etc style from raw email
 
-        return ops
+        #print("\nXXX....XXX\n", ops)
+        # print("\naaaa-aaaa\n")
+        return msg_str
 
     except errors.HttpError, error:
         print('An error occurred: %s' % error)
@@ -168,7 +180,7 @@ def chkLoanEmail(subjectstr="Lainat", codestr="'Lainasit seuraavat niteet:'"):
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
 
-    #print("Attr: {0} --- {1}".format(subjectstr, codestr))
+    # print("Attr: {0} --- {1}".format(subjectstr, codestr))
     service = discovery.build('gmail', 'v1', http=http)
     labels = []
 
@@ -176,9 +188,9 @@ def chkLoanEmail(subjectstr="Lainat", codestr="'Lainasit seuraavat niteet:'"):
 
     # Pick up just newest email of specific topic
     label = labels[0]   # newest one is the top one
-    #print("Latest id:", label['id'])
+    print("Latest id:", label['id'])
     bodystr = GetMimeMessage(service, 'me', label['id'])
-    #print("Sisältö: {0}".format(bodystr.encode('utf-8')))
+    print("Sisältö: {0}".format(bodystr))  # .encode('utf-8')
 
     return bodystr  # list of loaned books from email.
 
@@ -293,7 +305,7 @@ def addtoMissing(isbn, filename="koe3.csv"):
 
     print("Data got: ", isbn)
     # 9789525132977  9789510363959
-    #book = giveBookDetails(id, isbn)
+    # book = giveBookDetails(id, isbn)
     book = seekBookbyISBN(isbn)
     bookdets = (book[0], book[1], book[2], "", "", book[3], "", book[4])
 
@@ -337,10 +349,12 @@ if __name__ == "__main__":
 
         books = parseKohaEmail(recentLoans)
 
-    books += books2
+    #books = books.append(books2)
+    books.extend(books2)
 
     for book in books:
-        if len(book) > 0:
+        # if len(book) > 0:
+        if book is not None: 
             ok = addtoReading(book)
             print("OK? {0}".format(ok))
         # TODO: if noticing that a book was nonexistent, add to a csv for creating a new item
