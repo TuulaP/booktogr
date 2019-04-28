@@ -10,6 +10,7 @@ import pprint
 import simplejson as json
 import codecs
 import sys
+from finbooks import seekFinnabyName, getFinnaRecord
 
 from kitchen.text.converters import getwriter
 UTF8Writer = getwriter('utf8')
@@ -71,25 +72,85 @@ def seekKohaMarc(bookcode):
     return res
 
 
+def parseKohaEmail2(emailstr, codes="seuraavat niteet", library="lumme"):
+    ##print("email found: ", emailstr)
+    bookids = []
+    lineid = 0  # every evem line has ids.
+
+    emailstr = emailstr.split(codes)[1].split("Kiitos")[0]
+    #print("Kasiteltava...", emailstr)
+    lineid = 1
+    # sys.exit(1)
+    for line in emailstr.split("\n")[1:]:
+
+        if (len(line) < 4):
+            pass
+
+        #print("Rivi!: {0}".format(line))
+
+        bookname = line.split("/")[0]
+        #print("{1} Kirja: {0}".format(bookname, lineid))
+
+        #words = line.split(" ")
+
+        if lineid % 2 == 0:
+            lineid += 1
+            continue
+
+        match = re.search(r"[^0-9]+", bookname)
+
+        if match:
+            stuff = seekFinnabyName(bookname, library)
+            stuff = getFinnaRecord(stuff)  # returns isbn
+            #print("Tulos: ", stuff)
+            bookids.append(stuff)
+
+        lineid += 1
+
+    #print("Books found:", bookids)
+    # sys.exit(1)
+
+    return bookids
+
+
 def parseKohaEmail(emailstr):
     print("email found: ", emailstr)
     kohaids = []
     lineid = 0  # every evem line has ids.
 
-    for line in emailstr.split("\n"):
-        words = line.split(" ")
-        #print("Processing: ", words[0])
+    emailstr = emailstr.split("Lainat")[1].split("Teoksia")[0]
+    #print("Kasiteltava...", emailstr)
+    lineid = 1
+    # sys.exit(1)
+    for line in emailstr.split("\n")[1:]:
 
-        if lineid % 2 != 0:
+        if (len(line) < 4):
             pass
-        else:
-            kohaid = words[0]
-            if (len(kohaid) > 3 and 'Lainasit' not in kohaid):
-                print("kohaid {0}".format(kohaid))
-                kohaids.append(seekKohaMarc(seekKohaSearch(kohaid)))
+
+        #print("Rivi!: {0}".format(line))
+
+        bookname = line.split("/")[0]
+        #print("{1} Kirja: {0}".format(bookname, lineid))
+
+        #words = line.split(" ")
+
+        if lineid % 2 == 0:
+            lineid += 1
+            continue
+
+        match = re.search(r"[^0-9]+", bookname)
+
+        if match:
+            stuff = seekFinnabyName(bookname, 'kaakkuri')
+            stuff = getFinnaRecord(stuff)  # returns isbn
+            #print("Tulos: ", stuff)
+            kohaids.append(stuff)
+
         lineid += 1
 
-    print("Books found:", kohaids)
+    #print("Books found:", kohaids)
+    # sys.exit(1)
+
     return kohaids
 
 

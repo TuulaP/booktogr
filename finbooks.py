@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Book data from finna by isbn
+# Book data from finna by isbn, name
 
 from urllib import urlopen
 import pprint
@@ -18,10 +18,13 @@ full = "&field[]=fullRecord"
 recordurl = "https://api.finna.fi/v1/record?id="
 suffix = "&field[]=id"
 FLTR = "&filter[]=~"
+booktype = '&filter[]=~format_ext_str_mv="1/Book/Book/"'
 
 
 builcodes = {
-    'helmet': 'building:"0/Helmet/"'
+    'helmet': 'building:"0/Helmet/"',
+    'kaakkuri': 'building:"0/XAMK/"',
+    'lumme': 'building:"0/Lumme/"',
 }
 
 marcfields = {
@@ -32,7 +35,7 @@ marcfields = {
 
 
 def parseFEmail(emailstr):
-    # print("F.email found: ", emailstr)
+    print("F.email found: ", emailstr)
     bookids = []
     lineid = 0  # every evem line has ids.
     alku = 1
@@ -40,9 +43,9 @@ def parseFEmail(emailstr):
     osuus = emailstr.split("Lainat")[1]
     # print("xxxx - osuus", osuus)
 
-    for line in osuus.split("\r\n"):  # emailstr.split("\r\n"):
+    for line in osuus.split("\r\n")[1:]:  # emailstr.split("\r\n"):
         # if "primal" in line:
-        # print("xxx {0} : {1}".format(lineid, line))
+        print("xxx {0} : {1}".format(lineid, line))
         words = line.split(" ")
 
         if lineid == 1:
@@ -52,20 +55,22 @@ def parseFEmail(emailstr):
             break
 
         if alku:
-            if lineid % 2 == 0:  # viivakoodi -> ei voi hakea ; name
-                # print("Processing: ", words[0])
-                pass
-            else:
-                bookid = line + "*"
-                if (len(bookid) > 3):
-                    # pass
-                    # print("sss")
-                    print("bookid", bookid)
+            # if lineid % 2 == 0:  # viivakoodi -> ei voi hakea ; name
+            print("Processingx: ", words[0])
+            # pass
+        # else:
+            bookid = line.split("/")[0] + "*"
+            #bookid = line + "*"
+            #bookid = bookid.split(" ")[0]
+            # if (len(bookid) > 3):
+            #    # pass
+            #    # print("sss")
+            #    print("bookid", bookid)###
 
-                    isbn = getFinnaRecord(seekFinnabyName(bookid))
-                    bookids.append(isbn)
-                    isbn = ""
-                    bookid = ""
+            #    isbn = getFinnaRecord(seekFinnabyName(bookid))
+            #    bookids.append(isbn)
+            #    isbn = ""
+            #    bookid = ""
         lineid += 1
 
     print("Books found:", bookids)
@@ -166,9 +171,12 @@ def seekBookbyISBN(isbn, library="helmet"):
     return (title, author, isbn, publisher, pubyear)
 
 
-def seekFinnabyName(bookname):
+def seekFinnabyName(bookname, library="helmet"):
 
-    result = urlopen(url+bookname+suffix).read()
+    library = builcodes[library]
+
+    #print("urlis", url+bookname+FLTR+library+suffix)
+    result = urlopen(url+bookname+FLTR+library+suffix).read()
     result = json.loads(result)
     result = result.get('records')
 
@@ -188,7 +196,7 @@ def getFinnaRecord(bookid):
     result = json.loads(result)
     result = result.get('records')
 
-    #print ">>", bookid, "\n"
+    # print ">>", bookid, "\n"
 
     xmlmarc = result[0]['fullRecord']
 
@@ -223,7 +231,7 @@ def getFinnaRecord(bookid):
         if (len(isbns[1]) > len(isbns[0])):
             isbn = isbns[1]
 
-    #print("Valittu ISBN: {0}".format(isbn))
+    print("Valittu teos: {0}".format(isbn.strip()))
 
     return isbn.replace("-", "")
 
