@@ -173,8 +173,6 @@ def GetMimeMessage(service, user_id, msg_id, optcont="Lainasit seuraavat niteet:
         # ops = quopri.decodestring(ops).decode(
         #    'utf-8')  # fixes  etc style from raw email
 
-        # print("\nXXX....XXX\n", ops)
-        # print("\naaaa-aaaa\n")
         return msg_str
 
     except errors.HttpError, error:
@@ -343,23 +341,18 @@ if __name__ == "__main__":
     books = []
     books2 = []
 
-    if (args.library2):
-        # recentLoans2 = chkLoanEmail(
-        #    "Kiitos käynnistä ja tervetuloa uudelleen!", "Kiitos käynnistä ja tervetuloa uudelleen!")
+    codeword = None
+    mylibrary = None
 
-        # recentLoans2 = chkLoanEmail("Lainat", "Teoksia")
-        # recentLoans2 = chkLoanEmail("Lainat", "LAINAUSKUITTI")
-        # recentLoans2 = chkLoanEmail()
-        # print("sssss", recentLoans2)
-        # books2 = parseFEmail(recentLoans2)
-        recentLoans = chkLoanEmail("Fwd: Lainat")
-        books2 = parseKohaEmail(recentLoans)
+    if args.library2:
+        mylibrary = 'kaakkuri'
+        codeword = 'Lainat'
 
     if (args.email):
         print("Checking email for recent loans...")
         recentLoans = chkLoanEmail("Lainat")
 
-        books = parseKohaEmail2(recentLoans)
+        books = parseKohaEmail2(recentLoans, codeword, mylibrary)
 
     # books = books.append(books2)
     print("Kirjaset: ", books2)

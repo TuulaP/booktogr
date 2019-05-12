@@ -37,7 +37,7 @@ def seekKohaSearch(bookcode):
         tul = m.group(2)
     else:
         tul = "ERROR with Koha, with id: " + bookcode
-    #print("!!!", tul)
+    # print("!!!", tul)
     return tul
 
 
@@ -49,7 +49,7 @@ def seekKohaMarc(bookcode):
     # grab from page the isbn part from MARC
     # print(result)
     # sys.exit(1)
-    #aa = result.split('International Standard Book Number')[1]
+    # aa = result.split('International Standard Book Number')[1]
 
     try:
         aa = result.split('ISBN-tunnus, International Standard Book Number')[1]
@@ -73,12 +73,15 @@ def seekKohaMarc(bookcode):
 
 
 def parseKohaEmail2(emailstr, codes="seuraavat niteet", library="lumme"):
-    ##print("email found: ", emailstr)
+    # print("email found: ", emailstr)
     bookids = []
     lineid = 0  # every evem line has ids.
 
-    emailstr = emailstr.split(codes)[1].split("Kiitos")[0]
-    #print("Kasiteltava...", emailstr)
+    # tODO : how to find the end of book listing...
+    if library == 'lumme':
+        emailstr = emailstr.split(codes)[1].split("Kiitos")[0]
+    if library == 'kaakkuri':
+        emailstr = emailstr.split('Lainat')[1].split('Teoksia')[0]
     lineid = 1
     # sys.exit(1)
     for line in emailstr.split("\n")[1:]:
@@ -86,28 +89,36 @@ def parseKohaEmail2(emailstr, codes="seuraavat niteet", library="lumme"):
         if (len(line) < 4):
             pass
 
-        #print("Rivi!: {0}".format(line))
+        bookname = line.split("/")[0].strip()
+        print("{1} Kirja: <{0}>".format(bookname, lineid))
 
-        bookname = line.split("/")[0]
-        #print("{1} Kirja: {0}".format(bookname, lineid))
-
-        #words = line.split(" ")
+        # words = line.split(" ")
+        if (lineid > 6 and len(bookname) == 0):
+            lineid += 1
+            continue  # hmmm...
 
         if lineid % 2 == 0:
             lineid += 1
             continue
 
-        match = re.search(r"[^0-9]+", bookname)
+        if library != 'lumme':
+            match = re.search(r"[^0-9]+", bookname)
+        else:
+            match = bookname
 
         if match:
+            #print("Haetaan finnast: {0} ({1}-kirjastosta).".format(bookname, library))
             stuff = seekFinnabyName(bookname, library)
-            stuff = getFinnaRecord(stuff)  # returns isbn
-            #print("Tulos: ", stuff)
+            if (len(stuff) > 0):
+                stuff = getFinnaRecord(stuff)  # returns isbn
+            else:
+                stuff = "NOTFOUND:"+bookname
+            # print("Tulos: ", stuff)
             bookids.append(stuff)
 
         lineid += 1
 
-    #print("Books found:", bookids)
+    # print("Books found:", bookids)
     # sys.exit(1)
 
     return bookids
@@ -119,7 +130,7 @@ def parseKohaEmail(emailstr):
     lineid = 0  # every evem line has ids.
 
     emailstr = emailstr.split("Lainat")[1].split("Teoksia")[0]
-    #print("Kasiteltava...", emailstr)
+    # print("Kasiteltava...", emailstr)
     lineid = 1
     # sys.exit(1)
     for line in emailstr.split("\n")[1:]:
@@ -127,12 +138,12 @@ def parseKohaEmail(emailstr):
         if (len(line) < 4):
             pass
 
-        #print("Rivi!: {0}".format(line))
+        # print("Rivi!: {0}".format(line))
 
         bookname = line.split("/")[0]
-        #print("{1} Kirja: {0}".format(bookname, lineid))
+        # print("{1} Kirja: {0}".format(bookname, lineid))
 
-        #words = line.split(" ")
+        # words = line.split(" ")
 
         if lineid % 2 == 0:
             lineid += 1
@@ -143,12 +154,12 @@ def parseKohaEmail(emailstr):
         if match:
             stuff = seekFinnabyName(bookname, 'kaakkuri')
             stuff = getFinnaRecord(stuff)  # returns isbn
-            #print("Tulos: ", stuff)
+            # print("Tulos: ", stuff)
             kohaids.append(stuff)
 
         lineid += 1
 
-    #print("Books found:", kohaids)
+    # print("Books found:", kohaids)
     # sys.exit(1)
 
     return kohaids
@@ -183,7 +194,7 @@ def giveBookDetails(bookcode, isbn):
         bb = aa.split('Päänimeke')[1]
         m = re.search('<td>(.*?)\ \/</td>', bb)
         title = m.group(1)
-        #print("Title:", title)
+        # print("Title:", title)
     except:
         title = "?"
         aa = result
@@ -192,7 +203,7 @@ def giveBookDetails(bookcode, isbn):
         bb = aa.split("Vastuullisuusmerkinnöt jne.")[1]
         m = re.search('<td>(.*?)\.</td>', bb)
         author = m.group(1)
-        #print("Author:", author)
+        # print("Author:", author)
     except:
         author = "author?"
 
@@ -201,7 +212,7 @@ def giveBookDetails(bookcode, isbn):
         m = re.search('<td>(.*)\,*</td>', aa)
         publisher = m.group(1)
     except IndexError:
-        #print(">>> resu", result, "\n")
+        # print(">>> resu", result, "\n")
         publisher = ""
         print("Publisher:", publisher)
 
@@ -212,28 +223,28 @@ def giveBookDetails(bookcode, isbn):
     except IndexError:
         print("No year got :( ")
         pubyear = ""
-    #print("Pubyear:", pubyear)
+    # print("Pubyear:", pubyear)
 
     return (title, author, isbn, publisher, pubyear)
 
 
-##id   = seekKohaSearch("49120180709218")
-##isbn = seekKohaMarc(id)
+# id   = seekKohaSearch("49120180709218")
+# isbn = seekKohaMarc(id)
 
-#isbn = "9789525132977"
-#id = seekKohaSearch(isbn)
+# isbn = "9789525132977"
+# id = seekKohaSearch(isbn)
 # print(id)
 
-#aaa= giveBookdetails(id, isbn)
-#bookdets = (aaa[0],aaa[1],aaa[2],"","",aaa[3],"",aaa[4])
-#print ("Kirja:", bookdets)
+# aaa= giveBookdetails(id, isbn)
+# bookdets = (aaa[0],aaa[1],aaa[2],"","",aaa[3],"",aaa[4])
+# print ("Kirja:", bookdets)
 
 # print("!",aaa[3])
 
 
-#from tpcsvutils import writeToCSV
+# from tpcsvutils import writeToCSV
 
 # Title, Author, ISBN, My Rating, Average Rating, Publisher, Binding, Year Published, Original Publication Year,
-#writeToCSV('koe2.csv', bookdets)
+# writeToCSV('koe2.csv', bookdets)
 
-#print("Thanks, come again :)")
+# print("Thanks, come again :)")

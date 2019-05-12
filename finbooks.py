@@ -183,12 +183,12 @@ def seekFinnabyName(bookname, library="helmet"):
     # print "data searched:" + url + isbn + "\n"
     #pp = pprint.PrettyPrinter(indent=4)
     # pp.pprint(result)
-
-    resultSet = result[0]
-
-    print result[0]['id']
-
-    return result[0]['id']
+    if result:
+        resultSet = result[0]
+        print result[0]['id']
+        return result[0]['id']
+    else:
+        return ""
 
 
 def getFinnaRecord(bookid):
@@ -231,7 +231,12 @@ def getFinnaRecord(bookid):
         if (len(isbns[1]) > len(isbns[0])):
             isbn = isbns[1]
 
-    print("Valittu teos: {0}".format(isbn.strip()))
+    if record['245'] is not None:
+        nimeke = record['245']['a']
+        if record['245']['b'] is not None:
+            nimeke = nimeke + " " + record['245']['b']
+
+    print("Valittu teos: {0}, {1}".format(isbn.strip(), nimeke.encode('utf-8')))
 
     return isbn.replace("-", "")
 
