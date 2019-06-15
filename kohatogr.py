@@ -79,13 +79,14 @@ def parseKohaEmail2(emailstr, codes="seuraavat niteet", library="lumme"):
 
     # tODO : how to find the end of book listing...
     if library == 'lumme':
-        emailstr = emailstr.split(codes)[1].split("Kiitos")[0]
+        emailstr = emailstr.split("Lainasit seuraavat niteet:")[
+            1].split("Kiitos")[0]
     if library == 'kaakkuri':
         emailstr = emailstr.split('Lainat')[1].split('Teoksia')[0]
     lineid = 1
     # sys.exit(1)
+    #print("Starting listing books...", emailstr)
     for line in emailstr.split("\n")[1:]:
-
         if (len(line) < 4):
             pass
 

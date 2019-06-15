@@ -342,7 +342,7 @@ if __name__ == "__main__":
     books2 = []
 
     codeword = None
-    mylibrary = None
+    mylibrary = 'lumme'
 
     if args.library2:
         mylibrary = 'kaakkuri'
