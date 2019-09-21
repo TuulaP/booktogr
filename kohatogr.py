@@ -82,6 +82,7 @@ def parseKohaEmail2(emailstr, codes="seuraavat niteet", library="lumme"):
         emailstr = emailstr.split("Lainasit seuraavat niteet:")[
             1].split("Kiitos")[0]
     if library == 'kaakkuri':
+        print("Library {0} ...".format(library))
         emailstr = emailstr.split('Lainat')[1].split('Teoksia')[0]
     lineid = 1
     # sys.exit(1)

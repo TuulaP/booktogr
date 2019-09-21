@@ -124,7 +124,8 @@ def ListMessagesMatchingQuery(service, user_id, query=''):
         print('An error occurred: %s' % error)
 
 
-def GetMimeMessage(service, user_id, msg_id, optcont="Lainasit seuraavat niteet:"):
+# optcont="Lainasit seuraavat niteet"):
+def GetMimeMessage(service, user_id, msg_id, optcont="Kiitos"):
     """Get a Message and use it to create a MIME Message.
 
     Args:
@@ -150,28 +151,9 @@ def GetMimeMessage(service, user_id, msg_id, optcont="Lainasit seuraavat niteet:
         txts = message['payload']['body']['data'].encode('ASCII')
 
         msg_str = base64.urlsafe_b64decode(txts)
-        #print("!!!", msg_str)
 
-        # print("XXX", base64.urlsafe_b64decode(message['raw'].encode('ASCII')))
-        # sys.exit(1)
-        #print("Videsti:", message)
-        # msg_str = base64.urlsafe_b64decode(message['payload'].encode('ASCII'))
-        # ops = ""
-        ##print("Viesti: {0} \n********\n".format(msg_str))
-        # sys.exit(1)
-        # try:
-        #    ops = msg_str.split(
-        #        "X-MS-Exchange-Transport-CrossTenantHeadersStamped")[1].split("\r\n\r\n")[1]
-        # 3except IndexError:
-        # ops = msg_str.split(optcont)[1].split("Kiitos ")[0]
+        #print("Optcont {0} from \n{1}\n".format(optcont, msg_str))
         msg_str = msg_str.split(optcont)[0]  # hmm
-
-        # if len(msg_str)==0:  #hmmm.
-        #    msg_str = msg_str.split("Kiitos ")[1]
-
-        # import quopri
-        # ops = quopri.decodestring(ops).decode(
-        #    'utf-8')  # fixes  etc style from raw email
 
         return msg_str
 
@@ -181,6 +163,7 @@ def GetMimeMessage(service, user_id, msg_id, optcont="Lainasit seuraavat niteet:
 
 def chkLoanEmail(subjectstr="Lainat", codestr="'Lainasit seuraavat niteet:'"):
 
+    # default values for lumme
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
 
@@ -192,8 +175,9 @@ def chkLoanEmail(subjectstr="Lainat", codestr="'Lainasit seuraavat niteet:'"):
 
     # Pick up just newest email of specific topic
     # newest one is the top one  1: if the returned email comes later.
+    # if you forget to run this [1] takes the previous one etc.
     label = labels[0]
-    #print("Latest id:", label['id'])
+    print("Latest id:", label['id'])
     bodystr = GetMimeMessage(service, 'me', label['id'], codestr)
     # print("Sisältö: {0}".format(bodystr))  # .encode('utf-8')
 
@@ -348,7 +332,7 @@ if __name__ == "__main__":
         mylibrary = 'kaakkuri'
         codeword = 'Lainat'
 
-    if (args.email):
+    if (args.email or args.library2):
         print("Checking email for recent loans...")
         recentLoans = chkLoanEmail("Lainat")
 

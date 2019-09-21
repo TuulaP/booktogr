@@ -217,6 +217,8 @@ def getFinnaRecord(bookid):
 
         for f in record.get_fields('020'):
             #print("kentta:", f['a'])
+            if f['a'] is None:
+                return "NOSIBN?"
             isbns.append(f['a'].replace("-", ""))
 
         try:
@@ -236,7 +238,8 @@ def getFinnaRecord(bookid):
         if record['245']['b'] is not None:
             nimeke = nimeke + " " + record['245']['b']
 
-    print("Valittu teos: {0}, {1}".format(isbn.strip(), nimeke.encode('utf-8')))
+    print("Valittu teos: {0}, {1}".format(
+        isbn.strip(), nimeke.encode('utf-8')))
 
     return isbn.replace("-", "")
 
