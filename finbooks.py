@@ -3,13 +3,14 @@
 
 # Book data from finna by isbn, name
 
-from urllib import urlopen
+import urllib.request
+#from urllib import urlopen
 import pprint
 import simplejson as json
 # from booktogr import chkGoodReads
 import sys
 
-from kitchen.text.converters import getwriter
+#from kitchen.text.converters import getwriter
 
 url = "https://api.finna.fi/v1/search?lookfor="
 CSVSEP = ";"
@@ -117,7 +118,7 @@ def seekBookbyISBN(isbn, library="helmet"):
 
     ##print("XXX", url+isbn+full+FLTR+library)
 
-    result = urlopen(url+isbn+full+FLTR+library).read()
+    result = urllib.request.urlopen(url+isbn+full+FLTR+library).read()
     result = json.loads(result)
     result = result.get('records')
 
@@ -174,9 +175,12 @@ def seekBookbyISBN(isbn, library="helmet"):
 def seekFinnabyName(bookname, library="helmet"):
 
     library = builcodes[library]
+    bookname = urllib.parse.quote(bookname)  # TODO - this to elsewhere
+    # bookname.decode('utf-8')
 
-    #print("urlis", url+bookname+FLTR+library+suffix)
-    result = urlopen(url+bookname+FLTR+library+suffix).read()
+    #print("URL: ", url+bookname+FLTR+library+suffix)
+
+    result = urllib.request.urlopen(url+bookname+FLTR+library+suffix).read()
     result = json.loads(result)
     result = result.get('records')
 
@@ -185,14 +189,17 @@ def seekFinnabyName(bookname, library="helmet"):
     # pp.pprint(result)
     if result:
         resultSet = result[0]
-        print result[0]['id']
+        print(result[0]['id'])
         return result[0]['id']
     else:
         return ""
 
 
 def getFinnaRecord(bookid):
-    result = urlopen(recordurl+bookid+full).read()
+
+    #print("GetFinnaRecord: ", recordurl+bookid+full)
+
+    result = urllib.request.urlopen(recordurl+bookid+full).read()
     result = json.loads(result)
     result = result.get('records')
 
@@ -200,43 +207,67 @@ def getFinnaRecord(bookid):
 
     xmlmarc = result[0]['fullRecord']
 
+    #print(">>", xmlmarc)
+    import sys
+
     # pp = pprint.PrettyPrinter(indent=4)
     with open("kirja.xml", "w") as text_file:
-        text_file.write(xmlmarc.encode("UTF-8"))
+        text_file.write(xmlmarc)  # str(xmlmarc.encode("UTF-8")))
+    #
+    from pymarc import parse_xml_to_array, record_to_xml
 
-    from pymarc import parse_xml_to_array
-    reader = parse_xml_to_array("kirja.xml")
+    # NB , 020 (R)
+    hackish = xmlmarc.split('tag="020"')[1].split(
+        "</subfield>")[0].split('a">')[1]
+    #print(">>", hackish)
+    isbn = hackish
+    if " " in isbn:
+        isbn = isbn.split(" ")[0]  # some cases have (.sid) or (.nid) in isbn
+
+    nimeke = xmlmarc.split('tag="245"')[1].split(
+        "</subfield>")[0].split('a">')[1]
+    nimeke = nimeke[:-2]
+    #print(">!>", nimeke)
+
+    #xmlmarc = xmlmarc.split("<record>")[1]
+    #xmlmarc = "<record>"+xmlmarc
+    #xx = record_to_xml(xmlmarc)
+    # print(xx)
+
+    # reader = parse_xml_to_array(xmlmarc)  # (xmlmarc)  # "kirja.xml")
+
+    #         isbn = record['020']['a']
 
     details = {}
 
-    import re
-    isbn = ""
-    isbns = []
+    # import re
+    # isbn = ""
+    # isbns = []
 
-    for record in reader:
+    # for record in reader:
 
-        for f in record.get_fields('020'):
-            #print("kentta:", f['a'])
-            if f['a'] is None:
-                return "NOSIBN?"
-            isbns.append(f['a'].replace("-", ""))
+    #     for f in record.get_fields('020'):
+    #         #print("kentta:", f['a'])
+    #         if f['a'] is None:
+    #             return "NOSIBN?"
+    #         isbns.append(f['a'].replace("-", ""))
 
-        try:
-            isbn = record['020']['a']
-        except TypeError:
-            pass
+    #     try:
+    #         isbn = record['020']['a']
+    #     except TypeError:
+    #         pass
 
-    if (len(isbns) > 1):
-        if (len(isbns[0]) > len(isbns[1])):
-            isbn = isbns[0]
+    # if (len(isbns) > 1):
+    #     if (len(isbns[0]) > len(isbns[1])):
+    #         isbn = isbns[0]
 
-        if (len(isbns[1]) > len(isbns[0])):
-            isbn = isbns[1]
+    #     if (len(isbns[1]) > len(isbns[0])):
+    #         isbn = isbns[1]
 
-    if record['245'] is not None:
-        nimeke = record['245']['a']
-        if record['245']['b'] is not None:
-            nimeke = nimeke + " " + record['245']['b']
+    # if record['245'] is not None:
+    #     nimeke = record['245']['a']
+    #     if record['245']['b'] is not None:
+    #         nimeke = nimeke + " " + record['245']['b']
 
     print("Valittu teos: {0}, {1}".format(
         isbn.strip(), nimeke.encode('utf-8')))

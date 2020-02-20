@@ -1,0 +1,5 @@
+simplejson==3.16.0
+betterreads==0.4.2
+rauth==0.7.3
+pymarc==3.2.0
+unicodecsv==0.14.1
