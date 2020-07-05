@@ -82,7 +82,11 @@ def parseKohaEmail2(emailstr, codes="seuraavat niteet", library="lumme"):
     print("Library {0} ...".format(library))
 
     if 'lumme' in library:
+<<<<<<< HEAD
         emailstr = emailstr.split("seuraavat niteet")[
+=======
+        emailstr = emailstr.split(codes)[
+>>>>>>> 01b58caf98a9a06fd6c1a95039aaff549fae131b
             1].split("Kiitos")[0]
 
     if 'kaakkuri' in library:
