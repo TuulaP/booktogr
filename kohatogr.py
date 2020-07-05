@@ -4,17 +4,18 @@
 # Book data a koha library web system based on book id got from email
 
 import re
-from kitchen.text.converters import getwriter, to_bytes, to_unicode
-from urllib import urlopen
+#from kitchen.text.converters import getwriter, to_bytes, to_unicode
+import urllib.request
+#from urllib import urlopen
 import pprint
 import simplejson as json
 import codecs
 import sys
 from finbooks import seekFinnabyName, getFinnaRecord
 
-from kitchen.text.converters import getwriter
-UTF8Writer = getwriter('utf8')
-sys.stdout = UTF8Writer(sys.stdout)
+#from kitchen.text.converters import getwriter
+#UTF8Writer = getwriter('utf8')
+#sys.stdout = UTF8Writer(sys.stdout)
 
 
 base = "https://www.lumme-kirjastot.fi/cgi-bin/koha"
@@ -78,21 +79,26 @@ def parseKohaEmail2(emailstr, codes="seuraavat niteet", library="lumme"):
     lineid = 0  # every evem line has ids.
 
     # tODO : how to find the end of book listing...
-    if library == 'lumme':
-        emailstr = emailstr.split("Lainasit seuraavat niteet:")[
+    print("Library {0} ...".format(library))
+
+    if 'lumme' in library:
+        emailstr = emailstr.split("seuraavat niteet")[
             1].split("Kiitos")[0]
-    if library == 'kaakkuri':
-        print("Library {0} ...".format(library))
+
+    if 'kaakkuri' in library:
         emailstr = emailstr.split('Lainat')[1].split('Teoksia')[0]
     lineid = 1
     # sys.exit(1)
     #print("Starting listing books...", emailstr)
+
     for line in emailstr.split("\n")[1:]:
         if (len(line) < 4):
             pass
 
-        bookname = line.split("/")[0].strip()
-        print("{1} Kirja: <{0}>".format(bookname, lineid))
+        bookname = line.split("/")[0].strip().strip()
+        bookname = line.split(":")[0].strip()
+
+        ##print("{1} Kirja: <{0}>".format(bookname, lineid))
 
         # words = line.split(" ")
         if (lineid > 6 and len(bookname) == 0):
@@ -109,13 +115,16 @@ def parseKohaEmail2(emailstr, codes="seuraavat niteet", library="lumme"):
             match = bookname
 
         if match:
-            #print("Haetaan finnast: {0} ({1}-kirjastosta).".format(bookname, library))
+            # print(
+            #    "Haetaan finnast: {0} ({1}-kirjastosta).".format(bookname, library))
             stuff = seekFinnabyName(bookname, library)
+            #print("Basic id: ({0})".format(stuff))
+
             if (len(stuff) > 0):
                 stuff = getFinnaRecord(stuff)  # returns isbn
             else:
                 stuff = "NOTFOUND:"+bookname
-            # print("Tulos: ", stuff)
+
             bookids.append(stuff)
 
         lineid += 1
